@@ -13,7 +13,7 @@ server:
   servlet:
     context-path: /api
 
-# springdoc-openapi???????
+# springdoc-openapi
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -25,7 +25,7 @@ springdoc:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.ling.lingaiagent.controller
-# knife4j???????????????
+# knife4j config
 knife4j:
   enable: true
   setting:
