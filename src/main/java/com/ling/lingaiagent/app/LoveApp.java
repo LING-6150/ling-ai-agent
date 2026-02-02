@@ -1,6 +1,7 @@
 package com.ling.lingaiagent.app;
 
 import com.ling.lingaiagent.advisor.MyLoggerAdvisor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -9,7 +10,11 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+
 
 import java.util.List;
 
@@ -18,6 +23,7 @@ import java.util.List;
 @Slf4j
 
 public class LoveApp {
+
     private final ChatClient chatClient; //spring AI 聊天客户端
 
     //系统提示词： define AI's role and actions
@@ -30,22 +36,23 @@ public class LoveApp {
 
     /**
      * | 中文 | 英文 | 说明 |
-     *      * |-----|------|------|
-     *      * | 聊天客户端 | Chat Client | 与 AI 交互的客户端 |
-     *      * | 系统提示词 | System Prompt | 定义 AI 角色的指令 |
-     *      * | 对话记忆 | Chat Memory | 存储历史对话 |
-     *      * | 窗口式 | Window-based | 保留最近 N 条消息 |
-     *      * | 内存存储 | In-memory Storage | 存在内存中 |
-     *      * | 拦截器 | Advisor / Interceptor | 拦截并处理请求 |
-     *      * | 对话历史 | Conversation History | 之前的聊天记录 |
-     *      * | 令牌限制 | Token Limit | AI 模型的输入限制 |
-     *      * | 构建请求 | Build Request | 组装 API 请求 |
-     *      * | 响应对象 | Response Object | AI 返回的结果 |
+     * * |-----|------|------|
+     * * | 聊天客户端 | Chat Client | 与 AI 交互的客户端 |
+     * * | 系统提示词 | System Prompt | 定义 AI 角色的指令 |
+     * * | 对话记忆 | Chat Memory | 存储历史对话 |
+     * * | 窗口式 | Window-based | 保留最近 N 条消息 |
+     * * | 内存存储 | In-memory Storage | 存在内存中 |
+     * * | 拦截器 | Advisor / Interceptor | 拦截并处理请求 |
+     * * | 对话历史 | Conversation History | 之前的聊天记录 |
+     * * | 令牌限制 | Token Limit | AI 模型的输入限制 |
+     * * | 构建请求 | Build Request | 组装 API 请求 |
+     * * | 响应对象 | Response Object | AI 返回的结果 |
      * 初始化客户端
+     *
      * @param dashscopeChatModel
      */
-    public LoveApp(ChatModel dashscopeChatModel){
-    //String fileDir = System.getProperty("user.dir")+"/tmp.chat-memory";
+    public LoveApp(ChatModel dashscopeChatModel) {
+        //String fileDir = System.getProperty("user.dir")+"/tmp.chat-memory";
 
         //1. create chat memory (window-based, keeps the last 20 message)
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory.builder()
@@ -64,6 +71,7 @@ public class LoveApp {
                 )
                 .build();
     }
+
     /**
      * AI 基础对话（支持多轮对话记忆）
      *
@@ -115,4 +123,32 @@ public class LoveApp {
         log.info("loveReport: {}", loveReport);
         return loveReport;
     }
+
+    @Resource
+    private Advisor loveAppRagCloudAdvisor;
+
+
+    // AI 恋爱知识问答功能
+
+    @Resource
+    private VectorStore loveAppVectorStore;
+
+    public String doChatWithRag(String message, String chatId) {
+        ChatResponse chatResponse = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+                // 应用RAG知识库问答
+                // .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                //应用RAG 检索增强服务（基于晕知识库）
+                .advisors(loveAppRagCloudAdvisor)
+                .call()
+                .chatResponse();
+        String content = chatResponse.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
 }
+
