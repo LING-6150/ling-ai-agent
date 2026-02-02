@@ -127,11 +127,11 @@ public class LoveApp {
     @Resource
     private Advisor loveAppRagCloudAdvisor;
 
-
-    // AI 恋爱知识问答功能
-
     @Resource
-    private VectorStore loveAppVectorStore;
+    private VectorStore pgVectorVectorStore;  // ← 改这里
+    // AI 恋爱知识问答功能
+//    @Resource
+//    private VectorStore loveAppVectorStore;
 
     public String doChatWithRag(String message, String chatId) {
         ChatResponse chatResponse = chatClient
@@ -142,8 +142,10 @@ public class LoveApp {
                 .advisors(new MyLoggerAdvisor())
                 // 应用RAG知识库问答
                 // .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                // 使用 PGVector RAG
+                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))  // ← 改这里
                 //应用RAG 检索增强服务（基于晕知识库）
-                .advisors(loveAppRagCloudAdvisor)
+                //.advisors(loveAppRagCloudAdvisor)
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();

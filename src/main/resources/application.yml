@@ -3,11 +3,21 @@ spring:
     name: Ling-ai-agent
   profiles:
     active: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ling_ai_agent
+    username: postgres
+    password: postgres
   ai:
     ollama:
       base-url: http://localhost:11434
       chat:
         model: gemma3:1b
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        dimensions: 1536
+        distance-type: COSINE_DISTANCE
+        initialize-schema: true
 server:
   port: 8123
   servlet:
