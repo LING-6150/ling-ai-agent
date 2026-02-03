@@ -45,6 +45,8 @@ class LoveAppDocumentLoader {
             Resource[] resources = resourcePatternResolver.getResources("classpath:document/*.md");
             for (Resource resource : resources) {
                 String fileName = resource.getFilename();
+                // 提取文档倒数第 3 和第 2 个字作为标签
+                String status = fileName.substring(fileName.length() - 6, fileName.length() - 4);
                 // 2️⃣ 配置 Markdown 解析规则
                 // - 使用水平分割线（---）拆分文档
                 // - 忽略代码块和引用内容

@@ -8,6 +8,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,16 +29,34 @@ public class LoveAppVectorStoreConfig {
     // Document loader: reads Markdown files and converts them into Document objects
     private LoveAppDocumentLoader loveAppDocumentLoader;
 
+    @Resource
+    private MyTokenTextSplitter myTokenTextSplitter;
+
+    @Resource
+    private MyKeywordEnricher myKeywordEnricher;
+
     @Bean
     //Define a VectorStore Bean and inject the EmbeddingModel
     VectorStore loveAppVectorStore(EmbeddingModel dashscopeEmbeddingModel) {
         // Create an in-memory vector store using the embedding model
         SimpleVectorStore simpleVectorStore = SimpleVectorStore.builder(dashscopeEmbeddingModel)
                 .build();
-        // 加载文档
-        // Add documents to the vector store (documents are embedded automatically)
+
+
+
+        // 加载文档// Add documents to the vector store (documents are embedded automatically)
+        // 1. 加载原始文档
         List<Document> documents = loveAppDocumentLoader.loadMarkdowns();
-        simpleVectorStore.add(documents);
-        return simpleVectorStore; // Return the VectorStore for RAG retrieval
+
+        // 2. 切分长文档
+        List<Document> splitDocuments = myTokenTextSplitter.splitCustomized(documents);
+
+        // 3. 关键词增强（在切分后的文档上）
+        List<Document> enrichedDocuments = myKeywordEnricher.enrichDocuments(splitDocuments);
+
+        // 4. 存储
+        simpleVectorStore.add(enrichedDocuments);
+
+        return simpleVectorStore;
     }
 }

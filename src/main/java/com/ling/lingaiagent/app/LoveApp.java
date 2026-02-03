@@ -1,6 +1,8 @@
 package com.ling.lingaiagent.app;
 
 import com.ling.lingaiagent.advisor.MyLoggerAdvisor;
+import com.ling.lingaiagent.rag.LoveAppRagCustomAdvisorFactory;
+import com.ling.lingaiagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -11,6 +13,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -125,27 +128,33 @@ public class LoveApp {
     }
 
     @Resource
+    private  VectorStore loveAppVectorStore;
+
+    @Resource
     private Advisor loveAppRagCloudAdvisor;
 
     @Resource
     private VectorStore pgVectorVectorStore;  // ← 改这里
     // AI 恋爱知识问答功能
-//    @Resource
-//    private VectorStore loveAppVectorStore;
+
+    @Resource
+    private QueryRewriter queryRewriter;
 
     public String doChatWithRag(String message, String chatId) {
+        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient
                 .prompt()
-                .user(message)
+                .user(rewrittenMessage)
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
                 // 应用RAG知识库问答
-                // .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
-                // 使用 PGVector RAG
-                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))  // ← 改这里
-                //应用RAG 检索增强服务（基于晕知识库）
+                 //.advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                // 使用 PGVector RAG  这个是基础版
+                //.advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))  // ← 改这里
+                //应用RAG 检索增强服务（基于云知识库）
                 //.advisors(loveAppRagCloudAdvisor)
+                .advisors(LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
