@@ -10,7 +10,19 @@ import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 
 /**
  * 创建自定义的 RAG 检索增强顾问的工厂
+ * * Custom RAG Advisor Factory
+ *  *
+ *  * Purpose: Creates a RAG Advisor with advanced features integrated
+ *  *
+ *  * Features:
+ *  * 1. Custom Document Retriever (DocumentRetriever)
+ *  * 2. Empty Context Friendly Handling (ContextualQueryAugmenter)
+ *  *
+ *  * Use Cases:
+ *  * - Need to control retrieval parameters (similarity threshold, number of results)
+ *  * - Need to handle "no documents found" scenarios gracefully
  */
+
 public class LoveAppRagCustomAdvisorFactory {
 
     /**
@@ -20,21 +32,24 @@ public class LoveAppRagCustomAdvisorFactory {
      *
      * @return 自定义的 RAG 检索增强顾问
      */
-    public static Advisor createLoveAppRagCustomAdvisor(VectorStore vectorStore) {
+    public static Advisor createLoveAppRagCustomAdvisor(VectorStore vectorStore, String status) {
         // 过滤特定状态的文档
-        //Filter.Expression expression = new FilterExpressionBuilder()
-                //.eq("status", status)
-                //.build();
-        // 创建文档检索器
+        Filter.Expression expression = new FilterExpressionBuilder()
+                .eq("status", status)
+                .build();
+
+        // Configure document retriever
         DocumentRetriever documentRetriever = VectorStoreDocumentRetriever.builder()
                 .vectorStore(vectorStore)
-                //.filterExpression(expression) // 过滤条件
-                .similarityThreshold(0.3) // 相似度阈值
-                .topK(3) // 返回文档数量
+                .filterExpression(expression) // 过滤条件
+                .similarityThreshold(0.3) //similarity threshold (0-1, higher= stricter)
+                .topK(3) // return top 3 most relevant documents
                 .build();
+        //combine into complete advisor
         return RetrievalAugmentationAdvisor.builder()
-                .documentRetriever(documentRetriever)
+                .documentRetriever(documentRetriever) // retriever
                 .queryAugmenter(LoveAppContextualQueryAugmenterFactory.createInstance())
                 .build();
+
     }
 }

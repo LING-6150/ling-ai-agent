@@ -140,7 +140,7 @@ public class LoveApp {
     @Resource
     private QueryRewriter queryRewriter;
 
-    public String doChatWithRag(String message, String chatId) {
+    public String doChatWithRag(String message, String chatId, String status) {
         String rewrittenMessage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient
                 .prompt()
@@ -153,8 +153,8 @@ public class LoveApp {
                 // 使用 PGVector RAG  这个是基础版
                 //.advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))  // ← 改这里
                 //应用RAG 检索增强服务（基于云知识库）
-                //.advisors(loveAppRagCloudAdvisor)
-                .advisors(LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore))
+                //
+                .advisors(LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore, status))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();

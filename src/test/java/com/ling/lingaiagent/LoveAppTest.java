@@ -18,7 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
             String question = "如何提升自身魅力？";
             System.out.println("问题: " + question);
 
-            String answer = loveApp.doChatWithRag(question, "test-001");
+            String answer = loveApp.doChatWithRag(question, "test-001","单身");
             System.out.println("\n回答: " + answer);
 
             System.out.println("\n======== 测试完成 ========");

@@ -9,6 +9,19 @@ import org.springframework.stereotype.Component;
 
 /**
  * 查询重写器
+ * purpose : optimizes colloquial and non-standard user queries
+ * Examples:
+ *  * Examples:
+ *  * - "How do I get a girlfriend?" → "What are effective strategies for starting a relationship?"
+ *  * - Casual question → Standardized query
+ *
+ *  Mechanism:
+ *  use LLM to rewrite user questions into more standard expressions
+ *  suitable for retrieval
+ *
+ *  Known Issue:
+ *  -Default prompt converts Chinese to English (needs optimization)
+ *
  */
 @Component
 public class QueryRewriter {
@@ -17,7 +30,7 @@ public class QueryRewriter {
 
     public QueryRewriter(ChatModel dashscopeChatModel) {
         ChatClient.Builder builder = ChatClient.builder(dashscopeChatModel);
-        // 创建查询重写转换器
+        // create query rewrite transformer
         queryTransformer = RewriteQueryTransformer.builder()
                 .chatClientBuilder(builder)
                 .build();
@@ -31,7 +44,7 @@ public class QueryRewriter {
      */
     public String doQueryRewrite(String prompt) {
         Query query = new Query(prompt);
-        // 执行查询重写
+        // call LLM to rewrite query
         Query transformedQuery = queryTransformer.transform(query);
         // 输出重写后的查询
         return transformedQuery.text();
