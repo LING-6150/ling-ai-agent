@@ -121,6 +121,12 @@
             <artifactId>font-asian</artifactId>
             <version>9.1.0</version>
         </dependency>
+        <!--解析PDF用 Apache PDFBox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
         <!-- PostgreSQL 驱动 -->
         <dependency>
             <groupId>org.postgresql</groupId>

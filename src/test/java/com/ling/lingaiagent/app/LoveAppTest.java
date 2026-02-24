@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.UUID;
 
@@ -103,6 +104,71 @@ class LoveAppTest {
         String result = loveApp.doChatWithTools(
                 "生成一份《七夕约会计划》PDF，包含餐厅预订、活动流程和礼物清单，文件名为qixi_plan.pdf",
                 chatId
+        );
+        System.out.println(result);
+    }
+
+    @Test
+    void testDoChatWithDocument() {
+        String chatId = UUID.randomUUID().toString();
+        // 用昨天生成的七夕计划PDF
+        String filePath = System.getProperty("user.dir") + "/tmp/pdf/qixi_plan.pdf";
+        String result = loveApp.doChatWithDocument(
+                "这份计划里有哪些礼物推荐？",
+                chatId,
+                filePath
+        );
+        System.out.println(result);
+    }
+
+
+    @Test
+    void testRagAfterIngest() {
+        String chatId = UUID.randomUUID().toString();
+        String result = loveApp.doChatWithRag(
+                "七夕约会计划里有哪些礼物推荐？",
+                chatId,
+                "通用"
+        );
+        System.out.println("RAG查询结果: " + result);
+    }
+
+    @Test
+    void testIngestDocumentV2() {
+        String filePath = System.getProperty("user.dir") + "/tmp/pdf/qixi_plan.pdf";
+
+        // 第一次入库
+        IngestResult result1 = loveApp.ingestDocument(filePath, "qixi_plan.pdf", "通用");
+        System.out.println("第一次入库: " + result1);
+
+        // 第二次入库（测试幂等/去重）
+        IngestResult result2 = loveApp.ingestDocument(filePath, "qixi_plan.pdf", "通用");
+        System.out.println("第二次入库: " + result2);
+
+        // 验证去重生效
+        Assertions.assertTrue(result2.skippedAsDuplicate(), "第二次应该被跳过！");
+        Assertions.assertEquals(result1.docId(), result2.docId());
+        System.out.println("✅ 去重验证通过！docId=" + result1.docId());
+    }
+
+
+
+    @Test
+    void testDoChatWithRagAndSourcesWithDocId() {
+        String chatId = UUID.randomUUID().toString();
+
+        // 先入库拿到docId
+        String filePath = System.getProperty("user.dir") + "/tmp/pdf/qixi_plan.pdf";
+        IngestResult ingestResult = loveApp.ingestDocument(filePath, "qixi_plan.pdf", "通用");
+        System.out.println("docId: " + ingestResult.docId());
+        System.out.println("skipped: " + ingestResult.skippedAsDuplicate());
+
+        // 用docId filter检索，只在这份文档里问
+        String result = loveApp.doChatWithRagAndSources(
+                "七夕有哪些礼物推荐？",
+                chatId,
+                "通用",
+                ingestResult.docId()  // 传入docId
         );
         System.out.println(result);
     }
