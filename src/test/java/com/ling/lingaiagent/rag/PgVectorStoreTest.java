@@ -36,4 +36,5 @@ public class PgVectorStoreTest {
             System.err.println("❌ 没有加载到任何文档！");
         }
     }
+
 }

@@ -128,4 +128,20 @@ public class LoveAppAdvancedTest {
         System.out.println("\n【已婚】回答: " + answer3.substring(0, 200) + "...");
     }
 
+    @Test
+    void testPgVectorWithAllFeatures() {
+        System.out.println("======== 测试 PGVector 完整功能 ========");
+
+        // 测试单身过滤
+        String answer1 = loveApp.doChatWithRag("如何脱单？", "test-001", "单身");
+        System.out.println("\n【单身】回答: " + answer1.substring(0, 150) + "...");
+
+        // 测试已婚过滤
+        String answer2 = loveApp.doChatWithRag("如何经营婚姻？", "test-002", "已婚");
+        System.out.println("\n【已婚】回答: " + answer2.substring(0, 150) + "...");
+
+        // 测试空结果
+        String answer3 = loveApp.doChatWithRag("今天天气？", "test-003", "单身");
+        System.out.println("\n【空结果】: " + answer3);
+    }
 }

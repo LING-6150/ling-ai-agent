@@ -1,5 +1,6 @@
 package com.ling.lingaiagent.app;
 
+import com.ling.lingaiagent.tools.WebSearchTool;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -50,5 +51,60 @@ class LoveAppTest {
         Assertions.assertNotNull(answer);
     }
 
+    @Test
+    void testDoChatWithTools() {
+        String chatId = UUID.randomUUID().toString();
+        String result = loveApp.doChatWithTools(
+                "请立即调用writeFile工具，将以下内容保存为文件，文件名：love_record.txt，内容：姓名=小明，状态=单身，喜欢=小红，问题=不知道如何表白。不要问我任何问题，直接保存！",
+                chatId
+        );
+        System.out.println(result);
+    }
+
+    @Test
+    void testWebSearchTool() {
+        WebSearchTool tool = new WebSearchTool("pVEekXeWWe72tguRwE6ziXGY");
+        String result = tool.searchWeb("上海情侣约会地点");
+        System.out.println(result);
+    }
+
+    @Test
+    void testWebScraping(){
+            String chatId = UUID.randomUUID().toString();
+            String result= loveApp.doChatWithTools(
+                    "最近和对象吵架了， 看看Ling 有什么方法（https://github.com/LING-6150）上面其他情侣怎么解决矛盾的？",
+                    chatId
+            );
+            System.out.println(result);
+    }
+
+    @Test
+    void testResourceDownload() {
+        String chatId = UUID.randomUUID().toString();
+        String result = loveApp.doChatWithTools(
+                "直接下载一张适合做手机壁纸的星空情侣图片，文件名保存为couple_wallpaper.jpg",
+                chatId
+        );
+        System.out.println(result);
+    }
+
+    @Test
+    void testTerminalOperation() {
+        String chatId = UUID.randomUUID().toString();
+        String result = loveApp.doChatWithTools(
+                "执行 ls 命令，查看当前目录下的文件列表",
+                chatId
+        );
+        System.out.println(result);
+    }
+    @Test
+    void testPDFGeneration() {
+        String chatId = UUID.randomUUID().toString();
+        String result = loveApp.doChatWithTools(
+                "生成一份《七夕约会计划》PDF，包含餐厅预订、活动流程和礼物清单，文件名为qixi_plan.pdf",
+                chatId
+        );
+        System.out.println(result);
+    }
 }
 
