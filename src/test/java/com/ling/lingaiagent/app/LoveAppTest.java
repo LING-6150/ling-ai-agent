@@ -184,7 +184,7 @@ class LoveAppTest {
     }
 
     @Test
-    void testDoChatWithMcpImage() {
+    void testDoChatWithMcpSSE() {
         String chatId = UUID.randomUUID().toString();
         String message = "帮我搜索一些适合情侣约会的浪漫图片";
         String answer = loveApp.doChatWithMcp(message, chatId);

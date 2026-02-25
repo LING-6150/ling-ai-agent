@@ -13,11 +13,14 @@ spring:
       chat:
         model: gemma3:1b
     mcp:
-      mcp:
-        client:
-          request-timeout: 60s
-          stdio:
-            servers-configuration: classpath:mcp-servers.json
+      client:
+        request-timeout: 60s
+        sse:
+          connections:
+            server1:
+              url: http://localhost:8127
+        # stdio:
+        #   servers-configuration: classpath:mcp-servers.json
     vectorstore:
       pgvector:
         index-type: HNSW
