@@ -172,5 +172,24 @@ class LoveAppTest {
         );
         System.out.println(result);
     }
+
+
+    @Test
+    void testDoChatWithMcp() {
+        String chatId = UUID.randomUUID().toString();
+        String message = "我的另一半居住在上海静安寺地铁站附近，请帮我找到3公里内适合情侣的餐厅";
+        String answer = loveApp.doChatWithMcp(message, chatId);
+        System.out.println(answer);
+        Assertions.assertNotNull(answer);
+    }
+
+    @Test
+    void testDoChatWithMcpImage() {
+        String chatId = UUID.randomUUID().toString();
+        String message = "帮我搜索一些适合情侣约会的浪漫图片";
+        String answer = loveApp.doChatWithMcp(message, chatId);
+        System.out.println(answer);
+        Assertions.assertNotNull(answer);
+    }
 }
 

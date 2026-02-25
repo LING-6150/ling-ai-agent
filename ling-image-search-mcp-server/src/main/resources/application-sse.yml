@@ -1,0 +1,12 @@
+spring:
+  ai:
+    mcp:
+      server:
+        name: ling-image-search-mcp-server
+        version: 0.0.1
+        type: SYNC
+        stdio: false
+        sse-message-endpoint: /mcp/message
+        sse-endpoint: /sse
+server:
+  port: 8127

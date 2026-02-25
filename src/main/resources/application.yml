@@ -12,6 +12,12 @@ spring:
       base-url: http://localhost:11434
       chat:
         model: gemma3:1b
+    mcp:
+      mcp:
+        client:
+          request-timeout: 60s
+          stdio:
+            servers-configuration: classpath:mcp-servers.json
     vectorstore:
       pgvector:
         index-type: HNSW
@@ -43,3 +49,4 @@ knife4j:
 #search API
 search-api:
   api-key: pVEekXeWWe72tguRwE6ziXGY
+

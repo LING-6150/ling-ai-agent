@@ -3,6 +3,7 @@ package com.ling.lingaiagent.app;
 import com.ling.lingaiagent.advisor.MyLoggerAdvisor;
 import com.ling.lingaiagent.rag.LoveAppRagCustomAdvisorFactory;
 import com.ling.lingaiagent.rag.QueryRewriter;
+import io.swagger.v3.core.filter.SpecFilter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,6 +15,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,8 @@ public class LoveApp {
             "围绕单身、恋爱、已婚三种状态提问：单身状态询问社交圈拓展及追求心仪对象的困扰；" +
             "恋爱状态询问沟通、习惯差异引发的矛盾；已婚状态询问家庭责任与亲属关系处理的问题。" +
             "引导用户详述事情经过、对方反应及自身想法，以便给出专属解决方案。";
+    @Autowired
+    private SpecFilter specFilter;
 
     // 初始化客户端
 
@@ -449,6 +453,24 @@ public class LoveApp {
         // 例如：O'Brien → O''Brien
         // 为什么不用PreparedStatement？因为filterExpression是字符串拼接，不是SQL参数
         return s == null ? "" : s.replace("'", "''");
+    }
+
+    //加入MCP
+    @Resource
+    private ToolCallbackProvider toolCallbackProvider;
+
+    public String doChatWithMcp(String message, String chatId) {
+        ChatResponse chatResponse = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(new MyLoggerAdvisor())
+                .toolCallbacks(toolCallbackProvider)  // ← 改这里，tools → toolCallbacks
+                .call()
+                .chatResponse();
+        String content = chatResponse.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
     }
 }
 
