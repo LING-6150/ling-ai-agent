@@ -63,15 +63,15 @@ class LoveAppDocumentLoader {
                 allDocuments.addAll(reader.get());
             }
         } catch (IOException e) {
-            log.error("Markdown 文档加载失败", e);
+            log.error("Failed to load Markdown document", e);
         }
         return allDocuments;
     }
     //辅助方法： 根据文件名判断状态
     private String determineStatus(String filename) {
-        if (filename.contains("单身")) return "单身";
-        if (filename.contains("恋爱")) return "恋爱";
-        if (filename.contains("已婚")) return "已婚";
-        return "通用";
+        if (filename.contains("single")) return "single";
+        if (filename.contains("dating")) return "dating";
+        if (filename.contains("married")) return "married";
+        return "general";
     }
 }

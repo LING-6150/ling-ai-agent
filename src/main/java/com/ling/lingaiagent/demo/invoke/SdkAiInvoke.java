@@ -23,7 +23,7 @@ public class SdkAiInvoke {
                 .build();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
-                .content("你好 我是Ling 我正在做AI project")
+                .content("hi I'm Ling, I'm doing this project")
                 .build();
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")

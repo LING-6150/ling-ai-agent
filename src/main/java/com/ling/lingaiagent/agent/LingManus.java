@@ -4,6 +4,7 @@ import com.ling.lingaiagent.advisor.MyLoggerAdvisor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
  * 继承 ToolCallAgent，集成所有工具，是最终可用的智能体实例
  */
 @Component
+@Scope("prototype")  // ← 加这一行，每次注入都是新实例
 public class LingManus extends ToolCallAgent {
 
     public LingManus(ToolCallback[] allTools, ChatModel dashscopeChatModel) {

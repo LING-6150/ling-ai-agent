@@ -31,12 +31,12 @@ public abstract class ReActAgent extends BaseAgent {
         try {
             boolean shouldAct = think();
             if (!shouldAct) {
-                return "思考完成 - 无需行动";
+                return "Reasoning complete — no action required";
             }
             return act();
         } catch (Exception e) {
             e.printStackTrace();
-            return "步骤执行失败: " + e.getMessage();
+            return "Step execution failed: " + e.getMessage();
         }
     }
 }
