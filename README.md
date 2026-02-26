@@ -8,7 +8,7 @@ to provide personalized relationship guidance and life assistance.
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-green)](https://spring.io/projects/spring-boot)
 [![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0-brightgreen)](https://spring.io/projects/spring-ai)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue)](https://www.docker.com/)
-![AWS](https://img.shields.io/badge/Deployment-AWS-orange)
+[![AWS](https://img.shields.io/badge/Deployment-AWS%20EC2-orange)](https://aws.amazon.com/)
 
 ---
 
@@ -68,11 +68,11 @@ to provide personalized relationship guidance and life assistance.
 ![Homepage](docs/images/homepage.png)
 
 ### 💬 AI Love Coach
-![Love Coach 1](docs/images/love-coach-1.png)  
+![Love Coach 1](docs/images/love-coach-1.png)
 ![Love Coach 2](docs/images/love-coach-2.png)
 
 ### 🤖 AI Super Agent
-![Super Agent 1](docs/images/super-agent-1.png)  
+![Super Agent 1](docs/images/super-agent-1.png)
 ![Super Agent 2](docs/images/super-agent-2.png)
 
 ### 📄 PDF Generation Result
@@ -91,6 +91,7 @@ to provide personalized relationship guidance and life assistance.
 - OpenAI API (GPT-4o)
 - Alibaba DashScope API (Qwen-Plus)
 - DeepSeek API
+- Ollama (local models)
 
 **RAG & Storage**
 - PostgreSQL + PGVector (vector similarity search)
@@ -101,7 +102,9 @@ to provide personalized relationship guidance and life assistance.
 - Server-Sent Events (SSE) for real-time streaming
 
 **DevOps**
-- Docker (containerized, pushed to Alibaba Cloud ACR)
+- Docker (containerized, pushed to Docker Hub & Alibaba Cloud ACR)
+- AWS EC2 (t3.micro, Ubuntu 24.04) — production deployment
+- Alibaba Cloud ACR — container registry
 - Apache JMeter (load testing)
 
 **Testing**
@@ -110,6 +113,34 @@ to provide personalized relationship guidance and life assistance.
 
 **API Documentation**
 - Knife4j (Swagger UI)
+
+---
+
+## 🔑 Key Implementation Highlights
+
+**1. Custom ReAct Agent Framework**
+Designed a 4-layer agent architecture (`BaseAgent → ReActAgent → ToolCallAgent → LingManus`) implementing the ReAct pattern with autonomous tool selection, async execution, and stuck-loop detection. Complex tasks typically complete in 6-8 steps.
+
+**2. RAG Pipeline with Custom Advisors**
+Built `LoveAppRagCustomAdvisorFactory` and `QueryRewriter` from scratch instead of using Spring AI defaults, enabling query rewriting and search enhancement before vector similarity search for improved retrieval relevance. Optimized batch embedding ingestion from 30 API calls down to 2 per document.
+
+**3. Non-blocking SSE Streaming Architecture**
+Built real-time streaming responses using `CompletableFuture.runAsync()` and `SseEmitter`, ensuring long-running agent tasks do not block web server threads. Maintained 0% error rate under concurrent load tests.
+
+**4. Multi-LLM Capable Architecture**
+Decoupled model providers from application logic, enabling seamless switching between GPT-4o, Qwen-Plus, DeepSeek, and local Ollama models via configuration — with zero code changes required.
+
+**5. MCP Protocol Integration**
+Developed a standalone MCP Server supporting both Stdio (local) and SSE (remote) transport modes, enabling AI to dynamically call external services (Pexels image search, Amap location) via standardized protocol.
+
+**6. Agent Stability Engineering**
+Implemented `isStuck()` loop-detection heuristics and recovery prompts in `BaseAgent` to prevent infinite reasoning cycles and uncontrolled token consumption.
+
+**7. Prototype-scoped Agent Instances**
+Applied `@Scope("prototype")` to LingManus so each conversation creates a fresh agent instance, preventing state pollution across concurrent users — a deliberate concurrency design decision.
+
+**8. Cloud-ready Container Deployment**
+Containerized the system with Docker and deployed on AWS EC2 and Alibaba Cloud ACR, validating cross-platform builds. Resolved ARM → amd64 architecture mismatch using Docker Buildx for cross-platform compilation.
 
 ---
 
@@ -143,40 +174,47 @@ BaseAgent → ReActAgent → ToolCallAgent → LingManus
 - Pexels API image search tool
 - Supports Stdio (local) and SSE (remote) transport modes
 
+---
+
 ## ☁️ Cloud Deployment
 
-Backend deployed on **AWS EC2** (t3.micro, Ubuntu 24.04) using Docker.  
-PostgreSQL + PGVector running on the same instance.
+Backend containerized with Docker and deployed to multiple cloud environments:
+
+| Platform | Type | Details |
+|----------|------|---------|
+| AWS EC2 | Compute | t3.micro, Ubuntu 24.04, Docker runtime |
+| Alibaba Cloud ACR | Registry | Container image storage |
+| Docker Hub | Registry | Public image hosting |
 
 **Public API endpoint:** `http://100.53.178.115:8123/api`
 
+> Resolved ARM → amd64 cross-platform build issue using Docker Buildx
+
 ---
 
-## 📦 Deployment
-
-The backend is containerized using Docker and pushed to Alibaba Cloud Container Registry (ACR):
+## 📦 Local Docker Deployment
 
 ```bash
-# Build image
-docker build -t loveapp-backend:1.0 .
+# Build image (for amd64/EC2)
+docker buildx build --platform linux/amd64 -t isyjijiji/loveapp-backend:amd64 .
 
-# Push to Alibaba Cloud ACR
-docker tag loveapp-backend:1.0 \
-  crpi-xxx.cn-hangzhou.personal.cr.aliyuncs.com/ling-ai-agent/loveapp-backend:1.0
-docker push \
-  crpi-xxx.cn-hangzhou.personal.cr.aliyuncs.com/ling-ai-agent/loveapp-backend:1.0
+# Push to Docker Hub
+docker push isyjijiji/loveapp-backend:amd64
+
+# Run container
+docker run -d --name ling-ai-backend \
+  -p 8123:8123 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e DASHSCOPE_API_KEY=your_key \
+  isyjijiji/loveapp-backend:amd64
 ```
-
-Supports:
-- Local Docker deployment
-- Alibaba Cloud SAE (Serverless Application Engine)
-- Ready for AWS ECS / Kubernetes environments
 
 ---
 
 ## 🚀 Quick Start
 
-### Docker Compose (One-click startup)
+### Option 1: Docker Compose (One-click startup)
+
 ```bash
 # 1. Copy environment file
 cp .env.example .env
@@ -188,13 +226,15 @@ docker-compose up -d
 # 3. Check status
 docker-compose ps
 ```
-###Option 2:
-### Prerequisites
+
+### Option 2: Local Development
+
+**Prerequisites**
 - Java 21, Maven 3.9+
 - PostgreSQL with PGVector extension
 - Node.js 18+
 
-### Backend
+**Backend**
 ```bash
 git clone https://github.com/LING-6150/ling-ai-agent.git
 cd ling-ai-agent
@@ -202,13 +242,13 @@ cd ling-ai-agent
 mvn spring-boot:run
 ```
 
-### MCP Server (optional)
+**MCP Server (optional)**
 ```bash
 cd ling-image-search-mcp-server
 mvn spring-boot:run
 ```
 
-### Frontend
+**Frontend**
 ```bash
 cd ling-ai-agent-frontend
 npm install
@@ -217,35 +257,6 @@ npm run dev
 
 ---
 
-## 🔑 Key Implementation Highlights
-
-
-1. Production-style Document Ingestion Pipeline
-Built an end-to-end ingestion pipeline supporting real-time PDF upload → parse → chunk → embed → PGVector upsert.
-Implemented SHA-256 idempotent deduplication, chunk-level metadata tracking (docId, chunkIndex), and source attribution in RAG responses.
-Added DB-level expression indexes to optimize filtered retrieval queries, upgrading the system from an AI demo to a knowledge platform.
-
-2. Custom ReAct Agent Framework
-Designed a 4-layer agent architecture (BaseAgent → ReActAgent → ToolCallAgent → LingManus) implementing the ReAct pattern with autonomous tool selection, async execution, and stuck-loop detection.
-Complex tasks typically complete in 6–8 steps.
-
-3. Retrieval Optimization with Custom Advisors
-Implemented custom query rewriting and search enhancement before vector similarity search to improve retrieval precision beyond default Spring AI pipelines.
-
-4. Non-blocking SSE Streaming Architecture
-Built real-time streaming responses using CompletableFuture.runAsync() and SseEmitter, ensuring long-running tasks do not block web server threads.
-Maintained 0% error rate under concurrent load tests.
-
-5. Multi-LLM Capable Architecture
-Decoupled model providers from application logic, enabling seamless switching between cloud APIs and local models via configuration without code changes.
-
-6. Agent Stability Engineering
-Implemented loop-detection heuristics (isStuck()) and recovery prompts to prevent infinite reasoning cycles and uncontrolled token usage.
-
-7. Cloud-ready Container Deployment
-Containerized the system with Docker and deployed on AWS EC2 and Alibaba Cloud, validating cross-platform builds and runtime portability.
-
----
 ## 🎯 Project Goals
 
 This project demonstrates how to build a **production-style AI agent system**, integrating:
@@ -254,7 +265,7 @@ This project demonstrates how to build a **production-style AI agent system**, i
 - RAG architecture with optimized batch ingestion
 - Real-time streaming interaction via SSE
 - MCP protocol for standardized tool integration
-- Containerized deployment with Docker
+- Containerized deployment with Docker on AWS and Alibaba Cloud
 
 Designed as part of an advanced AI engineering portfolio.
 
@@ -275,24 +286,23 @@ Designed as part of an advanced AI engineering portfolio.
 · Built MCP Server with Pexels image search supporting Stdio and SSE
   transport modes for standardized AI tool integration
 
-· Containerized application with Docker, deployed to Alibaba Cloud ACR
+· Deployed on AWS EC2 (t3.micro) and Alibaba Cloud ACR using Docker;
+  resolved ARM → amd64 cross-platform build using Docker Buildx
 
 · Wrote unit tests for ReAct Agent core logic (isStuck detection,
   state machine) using JUnit 5, separate from Spring integration tests
 
-· Deployed Spring Boot backend on AWS EC2 (t3.micro, Ubuntu 24.04)
-  using Docker, with PostgreSQL + PGVector on the same instance;
-  resolved cross-architecture build issues (ARM → amd64) using
-  Docker Buildx for cross-platform compilation
+· Supports multi-LLM switching via configuration (OpenAI, DashScope,
+  DeepSeek, Ollama) with zero code changes required
 ```
 
 ---
 
 ## 👩‍💻 Author
 
-**Ling Duan**  
-MS in Information Systems — Northeastern University  
-AI Engineering & Intelligent Systems Focus  
+**Ling Duan**
+MS in Information Systems — Northeastern University
+AI Engineering & Intelligent Systems Focus
 [GitHub](https://github.com/LING-6150)
 
 ---
