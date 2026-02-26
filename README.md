@@ -142,6 +142,13 @@ BaseAgent → ReActAgent → ToolCallAgent → LingManus
 - Pexels API image search tool
 - Supports Stdio (local) and SSE (remote) transport modes
 
+## ☁️ Cloud Deployment
+
+Backend deployed on **AWS EC2** (t3.micro, Ubuntu 24.04) using Docker.  
+PostgreSQL + PGVector running on the same instance.
+
+**Public API endpoint:** `http://100.53.178.115:8123/api`
+
 ---
 
 ## 📦 Deployment
