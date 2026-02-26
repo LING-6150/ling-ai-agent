@@ -164,6 +164,19 @@ Supports:
 
 ## 🚀 Quick Start
 
+### Docker Compose (One-click startup)
+```bash
+# 1. Copy environment file
+cp .env.example .env
+# Edit .env and fill in your API keys
+
+# 2. Start all services (PostgreSQL + Backend)
+docker-compose up -d
+
+# 3. Check status
+docker-compose ps
+```
+###Option 2:
 ### Prerequisites
 - Java 21, Maven 3.9+
 - PostgreSQL with PGVector extension
