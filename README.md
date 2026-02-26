@@ -8,6 +8,7 @@ to provide personalized relationship guidance and life assistance.
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-green)](https://spring.io/projects/spring-boot)
 [![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0-brightgreen)](https://spring.io/projects/spring-ai)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue)](https://www.docker.com/)
+![AWS](https://img.shields.io/badge/Deployment-AWS-orange)
 
 ---
 
