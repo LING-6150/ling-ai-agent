@@ -103,6 +103,10 @@ to provide personalized relationship guidance and life assistance.
 - Docker (containerized, pushed to Alibaba Cloud ACR)
 - Apache JMeter (load testing)
 
+**Testing**
+- JUnit 5 (unit tests for core agent logic)
+- Spring Boot Test (integration tests)
+
 **API Documentation**
 - Knife4j (Swagger UI)
 
@@ -265,6 +269,9 @@ Designed as part of an advanced AI engineering portfolio.
   transport modes for standardized AI tool integration
 
 · Containerized application with Docker, deployed to Alibaba Cloud ACR
+
+· Wrote unit tests for ReAct Agent core logic (isStuck detection,
+  state machine) using JUnit 5, separate from Spring integration tests
 ```
 
 ---
