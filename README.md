@@ -279,6 +279,11 @@ Designed as part of an advanced AI engineering portfolio.
 
 · Wrote unit tests for ReAct Agent core logic (isStuck detection,
   state machine) using JUnit 5, separate from Spring integration tests
+
+· Deployed Spring Boot backend on AWS EC2 (t3.micro, Ubuntu 24.04)
+  using Docker, with PostgreSQL + PGVector on the same instance;
+  resolved cross-architecture build issues (ARM → amd64) using
+  Docker Buildx for cross-platform compilation
 ```
 
 ---
