@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ling-ai-postgres
+    environment:
+      POSTGRES_DB: ling_ai_agent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: loveapp-backend:1.0
+    container_name: ling-ai-backend
+    ports:
+      - "8123:8123"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://postgres:5432/ling_ai_agent
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - SEARCH_API_KEY=${SEARCH_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -12,11 +12,11 @@ spring:
       base-url: http://localhost:11434
       chat:
         model: gemma3:1b
-    openai:
-      api-key: ${OPENAI_API_KEY:your-key-here}
-      chat:
-        options:
-          model: gpt-4o
+    #openai:
+      #api-key: ${OPENAI_API_KEY:your-key-here}
+      #chat:
+        #options:
+          #model: gpt-4o
     mcp:
       client:
         request-timeout: 60s
