@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
-
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 @Slf4j
@@ -482,7 +482,7 @@ public class LoveApp {
     }
 
     //加入MCP
-    @Resource
+    @Autowired(required = false)
     private ToolCallbackProvider toolCallbackProvider;
 
     public String doChatWithMcp(String message, String chatId) {
