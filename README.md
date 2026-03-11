@@ -1,8 +1,8 @@
 # 💖 Ling AI Agent — Intelligent Relationship & Life Assistant
 
 An AI-powered multi-agent system built with **Spring AI 1.0.0**, combining  
-LLM orchestration, RAG knowledge retrieval, tool calling, and PDF generation  
-to provide personalized relationship guidance and life assistance.
+LLM orchestration, RAG knowledge retrieval, cross-encoder reranking, tool calling,  
+and PDF generation to provide personalized relationship guidance and life assistance.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-green)](https://spring.io/projects/spring-boot)
@@ -27,17 +27,24 @@ to provide personalized relationship guidance and life assistance.
 - 🧠 **Retrieval-Augmented Generation (RAG)**
   - Custom document ingestion pipeline with batch processing
   - Reduced embedding API calls from **30 → 2 per document** via batch ingestion
-  - Vector search powered by **PGVector**
+  - Cross-encoder reranking (ms-marco-MiniLM-L-6-v2) via Python FastAPI microservice
+  - Vector search powered by **PGVector + HNSW indexing**
+  - Query rewriting for improved retrieval relevance
+  - SHA-256 content-based deduplication
+
+- 📊 **Observability**
+  - LangSmith tracing via OpenTelemetry for step-level visibility
+  - Real-time monitoring of RAG retrieval and agent reasoning steps
+  - Token usage and latency tracking per request
 
 - 🔧 **Multi-LLM Support**
-  - GPT-4o (OpenAI)
-  - Qwen-Plus (DashScope)
-  - DeepSeek
+  - GPT-4o (OpenAI) — primary provider
+  - Qwen-Plus (DashScope) — alternative provider
+  - Switchable via configuration with zero code changes
 
 - 🔌 **MCP Protocol Integration**
   - Custom MCP Server with Pexels image search
   - Supports both Stdio and SSE transport modes
-  - Amap location-based recommendations
 
 ---
 
@@ -52,7 +59,7 @@ to provide personalized relationship guidance and life assistance.
 | Agent avg task completion | **6-8 steps** (max 20) |
 | Embedding API calls optimized | **30 → 2** per document |
 
-> Load tested with Apache JMeter: 10 concurrent users × 5 iterations
+> Load tested with Apache JMeter: 10 concurrent users × 10 iterations
 
 ---
 
@@ -70,7 +77,7 @@ to provide personalized relationship guidance and life assistance.
 ### 💬 AI Love Coach
 ![Love Coach 1](docs/images/love-coach-1.png)
 ![Love Coach 2](docs/images/love-coach-2.png)
-![Love Coach 2](docs/images/love-coach-3.png)
+![Love Coach 3](docs/images/love-coach-3.png)
 
 ### 🤖 AI Super Agent
 ![Super Agent 1](docs/images/super-agent-1.png)
@@ -83,7 +90,6 @@ to provide personalized relationship guidance and life assistance.
 ![LangSmith Dashboard](docs/images/LangSmith1.png)
 ![LangSmith Trace Detail](docs/images/LangSmith2.png)
 
-
 ---
 
 ## ⚙ Tech Stack
@@ -94,23 +100,26 @@ to provide personalized relationship guidance and life assistance.
 - Spring AI 1.0.0
 
 **AI & LLM**
-- OpenAI API (GPT-4o)
-- Alibaba DashScope API (Qwen-Plus)
-- DeepSeek API
-- Ollama (local models)
+- OpenAI API (GPT-4o) — primary
+- Alibaba DashScope API (Qwen-Plus) — alternative
+- Switchable via configuration
 
 **RAG & Storage**
-- PostgreSQL + PGVector (vector similarity search)
-- Document ETL pipeline with batch embedding
+- PostgreSQL + PGVector (vector similarity search, HNSW indexing)
+- Cross-encoder reranking via Python FastAPI (sentence-transformers)
+- Document ETL pipeline with batch embedding and SHA-256 deduplication
+
+**Observability**
+- LangSmith (via OpenTelemetry OTLP export)
+- Step-level tracing for RAG retrieval and agent reasoning
 
 **Communication**
 - REST API
 - Server-Sent Events (SSE) for real-time streaming
 
 **DevOps**
-- Docker (containerized, pushed to Docker Hub & Alibaba Cloud ACR)
+- Docker (containerized, cross-platform amd64 build via Docker Buildx)
 - AWS EC2 (t3.micro, Ubuntu 24.04) — production deployment
-- Alibaba Cloud ACR — container registry
 - Apache JMeter (load testing)
 
 **Testing**
@@ -125,28 +134,48 @@ to provide personalized relationship guidance and life assistance.
 ## 🔑 Key Implementation Highlights
 
 **1. Custom ReAct Agent Framework**
-Designed a 4-layer agent architecture (`BaseAgent → ReActAgent → ToolCallAgent → LingManus`) implementing the ReAct pattern with autonomous tool selection, async execution, and stuck-loop detection. Complex tasks typically complete in 6-8 steps.
+Designed a 4-layer agent architecture (`BaseAgent → ReActAgent → ToolCallAgent → LingManus`) 
+implementing the ReAct pattern with autonomous tool selection, async execution, and 
+stuck-loop detection. Complex tasks typically complete in 6-8 steps.
 
 **2. RAG Pipeline with Custom Advisors**
-Built `LoveAppRagCustomAdvisorFactory` and `QueryRewriter` from scratch instead of using Spring AI defaults, enabling query rewriting and search enhancement before vector similarity search for improved retrieval relevance. Optimized batch embedding ingestion from 30 API calls down to 2 per document.
+Built `LoveAppRagCustomAdvisorFactory` and `QueryRewriter` from scratch instead of using 
+Spring AI defaults, enabling query rewriting and search enhancement before vector similarity 
+search for improved retrieval relevance. Optimized batch embedding ingestion from 30 API 
+calls down to 2 per document.
 
-**3. Non-blocking SSE Streaming Architecture**
-Built real-time streaming responses using `CompletableFuture.runAsync()` and `SseEmitter`, ensuring long-running agent tasks do not block web server threads. Maintained 0% error rate under concurrent load tests.
+**3. Cross-Encoder Reranking Pipeline**
+Integrated a Python FastAPI microservice running `ms-marco-MiniLM-L-6-v2` cross-encoder 
+to re-score top-6 vector search candidates and return top-3 most relevant chunks, improving 
+retrieval precision over pure cosine similarity. Implemented graceful fallback to original 
+ranking when reranking service is unavailable.
 
-**4. Multi-LLM Capable Architecture**
-Decoupled model providers from application logic, enabling seamless switching between GPT-4o, Qwen-Plus, DeepSeek, and local Ollama models via configuration — with zero code changes required.
+**4. LangSmith Observability Integration**
+Integrated LangSmith tracing via OpenTelemetry OTLP export, enabling step-level visibility 
+into RAG retrieval, agent reasoning, and LLM calls. Captures token usage, latency 
+percentiles, and error rates per request in real time.
 
-**5. MCP Protocol Integration**
-Developed a standalone MCP Server supporting both Stdio (local) and SSE (remote) transport modes, enabling AI to dynamically call external services (Pexels image search, Amap location) via standardized protocol.
+**5. Non-blocking SSE Streaming Architecture**
+Built real-time streaming responses using `CompletableFuture.runAsync()` and `SseEmitter`, 
+ensuring long-running agent tasks do not block web server threads. Maintained 0% error 
+rate under concurrent load tests.
 
-**6. Agent Stability Engineering**
-Implemented `isStuck()` loop-detection heuristics and recovery prompts in `BaseAgent` to prevent infinite reasoning cycles and uncontrolled token consumption.
+**6. MCP Protocol Integration**
+Developed a standalone MCP Server supporting both Stdio (local) and SSE (remote) transport 
+modes, enabling AI to dynamically call external services (Pexels image search) via 
+standardized protocol.
 
-**7. Prototype-scoped Agent Instances**
-Applied `@Scope("prototype")` to LingManus so each conversation creates a fresh agent instance, preventing state pollution across concurrent users — a deliberate concurrency design decision.
+**7. Agent Stability Engineering**
+Implemented `isStuck()` loop-detection heuristics and recovery prompts in `BaseAgent` to 
+prevent infinite reasoning cycles and uncontrolled token consumption.
 
-**8. Cloud-ready Container Deployment**
-Containerized the system with Docker and deployed on AWS EC2 and Alibaba Cloud ACR, validating cross-platform builds. Resolved ARM → amd64 architecture mismatch using Docker Buildx for cross-platform compilation.
+**8. Prototype-scoped Agent Instances**
+Applied `@Scope("prototype")` to LingManus so each conversation creates a fresh agent 
+instance, preventing state pollution across concurrent users.
+
+**9. Cloud-ready Container Deployment**
+Containerized the system with Docker and deployed on AWS EC2, resolving ARM → amd64 
+architecture mismatch using Docker Buildx for cross-platform compilation.
 
 ---
 
@@ -162,7 +191,7 @@ BaseAgent → ReActAgent → ToolCallAgent → LingManus
 - `LingManus`: Final agent with all 6 tools injected
 
 ### AI Services Layer
-- Pre-Advisors: security guard, query rewriting, RAG retrieval
+- Pre-Advisors: query rewriting, RAG retrieval, cross-encoder reranking
 - ChatModel routing engine (multi-LLM support)
 - Tool execution framework
 - RAG knowledge pipeline with custom advisors
@@ -180,39 +209,40 @@ BaseAgent → ReActAgent → ToolCallAgent → LingManus
 - Pexels API image search tool
 - Supports Stdio (local) and SSE (remote) transport modes
 
+### Reranking Service
+- Python FastAPI microservice on port 8000
+- Cross-encoder model: `ms-marco-MiniLM-L-6-v2`
+- Graceful fallback to original ranking on failure
+
 ---
 
 ## ☁️ Cloud Deployment
 
-Backend containerized with Docker and deployed to multiple cloud environments:
+Backend containerized with Docker and deployed to AWS EC2:
 
 | Platform | Type | Details |
 |----------|------|---------|
 | AWS EC2 | Compute | t3.micro, Ubuntu 24.04, Docker runtime |
-| Alibaba Cloud ACR | Registry | Container image storage |
 | Docker Hub | Registry | Public image hosting |
-
-**Public API endpoint:** `http://100.53.178.115:8123/api`
 
 > Resolved ARM → amd64 cross-platform build issue using Docker Buildx
 
 ---
 
 ## 📦 Local Docker Deployment
-
 ```bash
 # Build image (for amd64/EC2)
-docker buildx build --platform linux/amd64 -t isyjijiji/loveapp-backend:amd64 .
+docker buildx build --platform linux/amd64 -t your-dockerhub/loveapp-backend:amd64 .
 
 # Push to Docker Hub
-docker push isyjijiji/loveapp-backend:amd64
+docker push your-dockerhub/loveapp-backend:amd64
 
 # Run container
 docker run -d --name ling-ai-backend \
   -p 8123:8123 \
   -e SPRING_PROFILES_ACTIVE=prod \
-  -e DASHSCOPE_API_KEY=your_key \
-  isyjijiji/loveapp-backend:amd64
+  -e OPENAI_API_KEY=your_key \
+  your-dockerhub/loveapp-backend:amd64
 ```
 
 ---
@@ -220,7 +250,6 @@ docker run -d --name ling-ai-backend \
 ## 🚀 Quick Start
 
 ### Option 1: Docker Compose (One-click startup)
-
 ```bash
 # 1. Copy environment file
 cp .env.example .env
@@ -239,6 +268,7 @@ docker-compose ps
 - Java 21, Maven 3.9+
 - PostgreSQL with PGVector extension
 - Node.js 18+
+- Python 3.10+
 
 **Backend**
 ```bash
@@ -246,6 +276,14 @@ git clone https://github.com/LING-6150/ling-ai-agent.git
 cd ling-ai-agent
 # Configure application-local.yml with your API keys
 mvn spring-boot:run
+```
+
+**Reranking Service**
+```bash
+cd reranking-service
+pip3 install fastapi uvicorn sentence-transformers
+python3 rerank_service.py
+# Runs on http://localhost:8000
 ```
 
 **MCP Server (optional)**
@@ -266,51 +304,47 @@ npm run dev
 ## 🎯 Project Goals
 
 This project demonstrates how to build a **production-style AI agent system**, integrating:
-- Multi-LLM orchestration with cost-aware routing
+- ReAct agent architecture with 4-layer inheritance
+- RAG pipeline with cross-encoder reranking for improved precision
+- LangSmith observability for production monitoring
 - Tool calling pipelines with 6 real-world tools
-- RAG architecture with optimized batch ingestion
 - Real-time streaming interaction via SSE
 - MCP protocol for standardized tool integration
-- Containerized deployment with Docker on AWS and Alibaba Cloud
+- Containerized deployment with Docker on AWS EC2
 
 Designed as part of an advanced AI engineering portfolio.
 
 ---
 
 ## 📝 Resume Bullets
-
 ```
-· Built autonomous AI Agent using ReAct framework with Spring AI 1.0.0,
-  completing complex tasks in avg 6-8 steps with stuck-loop detection
+· Engineered ReAct-based agentic system referencing OpenManus architecture 
+  with 4-layer inheritance (BaseAgent→ReActAgent→ToolCallAgent→LingManus); 
+  implemented human-in-the-loop escalation, stuck-state detection, and 
+  self-termination; integrated LangSmith tracing for step-level observability
 
-· Implemented RAG pipeline with PGVector, reducing embedding API calls
-  from 30 to 2 per document via batch ingestion (20 docs/batch)
+· Designed tool orchestration framework via standalone MCP server 
+  (Stdio + SSE transport); containerized with Docker and deployed on AWS EC2; 
+  resolved ARM → amd64 compatibility via Docker Buildx
 
-· Developed real-time streaming API with SSE achieving 0% error rate
-  under 10 concurrent users, 41 req/min throughput (JMeter tested)
+· Built production RAG pipeline with HNSW vector indexing (PGVector), 
+  custom query-rewriting advisors, and cross-encoder reranking 
+  (ms-marco-MiniLM-L-6-v2) via Python FastAPI microservice; reduced 
+  embedding API calls from 30 to 2 per document via SHA-256 deduplication
 
-· Built MCP Server with Pexels image search supporting Stdio and SSE
-  transport modes for standardized AI tool integration
-
-· Deployed on AWS EC2 (t3.micro) and Alibaba Cloud ACR using Docker;
-  resolved ARM → amd64 cross-platform build using Docker Buildx
-
-· Wrote unit tests for ReAct Agent core logic (isStuck detection,
-  state machine) using JUnit 5, separate from Spring integration tests
-
-· Supports multi-LLM switching via configuration (OpenAI, DashScope,
-  DeepSeek, Ollama) with zero code changes required
+· Sustained 41 req/min throughput with P95 latency ~6.1s and 0% error 
+  rate under concurrent load (JMeter)
 ```
 
 ---
 
 ## 👩‍💻 Author
 
-**Ling Duan**
-MS in Information Systems — Northeastern University
-AI Engineering & Intelligent Systems Focus
+**Ling Duan**  
+MS in Information Systems — Northeastern University  
+AI Engineering & Intelligent Systems Focus  
 [GitHub](https://github.com/LING-6150)
 
 ---
 
-*Built with Spring AI 1.0.0 | February 2026*
+*Built with Spring AI 1.0.0 | March 2026*
