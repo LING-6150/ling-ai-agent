@@ -37,9 +37,9 @@ public class LoveAppVectorStoreConfig {
 
     @Bean
     //Define a VectorStore Bean and inject the EmbeddingModel
-    VectorStore loveAppVectorStore(EmbeddingModel dashscopeEmbeddingModel) {
+    VectorStore loveAppVectorStore(EmbeddingModel openAiEmbeddingModel) {
         // Create an in-memory vector store using the embedding model
-        SimpleVectorStore simpleVectorStore = SimpleVectorStore.builder(dashscopeEmbeddingModel)
+        SimpleVectorStore simpleVectorStore = SimpleVectorStore.builder(openAiEmbeddingModel)
                 .build();
 
 

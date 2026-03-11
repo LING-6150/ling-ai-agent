@@ -60,16 +60,16 @@ public class PgVectorStoreConfig {
      * 5. Store in PostgreSQL with HNSW indexing
      *
      * @param jdbcTemplate Spring JDBC Template (auto-injected by Spring)
-     * @param dashscopeEmbeddingModel DashScope Embedding Model (text-embedding-v3, 1536-dim)
+     * @param openAiEmbeddingModel AI  Embedding Model (text-embedding-v3, 1536-dim)
      * @return PgVectorStore instance ready for production use
      */
 
     @Bean
     public VectorStore pgVectorVectorStore(
             JdbcTemplate jdbcTemplate,
-            EmbeddingModel dashscopeEmbeddingModel) {
+            EmbeddingModel openAiEmbeddingModel) {
 
-        VectorStore vectorStore = PgVectorStore.builder(jdbcTemplate, dashscopeEmbeddingModel)
+        VectorStore vectorStore = PgVectorStore.builder(jdbcTemplate, openAiEmbeddingModel)
                 .dimensions(1536)  // Vector dimensions (matches text-embedding-v3)
                 .distanceType(COSINE_DISTANCE)  // Cosine distance for similarity calculation
                 .indexType(HNSW) // HNSW index (Hierarchical Navigable Small World)

@@ -49,4 +49,15 @@ public class AiController {
         LingManus lingManus = applicationContext.getBean(LingManus.class);
         return lingManus.runStream(message);
     }
+    // ========== RAG 接口 ==========
+
+    @GetMapping("/love_app/chat/rag")
+    public String doChatWithRag(String message, String chatId, String status) {
+        return loveApp.doChatWithRag(message, chatId, status);
+    }
+
+    @GetMapping("/love_app/chat/rag/rerank")
+    public String doChatWithRagAndRerank(String message, String chatId, String status) {
+        return loveApp.doChatWithRagAndRerank(message, chatId, status);
+    }
 }

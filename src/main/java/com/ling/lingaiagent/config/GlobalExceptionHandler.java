@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.ling.lingaiagent.controller")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)

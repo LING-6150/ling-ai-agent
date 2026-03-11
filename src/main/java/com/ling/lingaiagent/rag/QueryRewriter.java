@@ -28,8 +28,8 @@ public class QueryRewriter {
 
     private final QueryTransformer queryTransformer;
 
-    public QueryRewriter(ChatModel dashscopeChatModel) {
-        ChatClient.Builder builder = ChatClient.builder(dashscopeChatModel);
+    public QueryRewriter(ChatModel openAiChatModel) {
+        ChatClient.Builder builder = ChatClient.builder(openAiChatModel);
         // create query rewrite transformer
         queryTransformer = RewriteQueryTransformer.builder()
                 .chatClientBuilder(builder)

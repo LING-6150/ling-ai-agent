@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")  // ← 加这一行，每次注入都是新实例
 public class LingManus extends ToolCallAgent {
 
-    public LingManus(ToolCallback[] allTools, ChatModel dashscopeChatModel) {
+    public LingManus(ToolCallback[] allTools, ChatModel openAiChatModel) {
         super(allTools);
         this.setName("LingManus");
 
@@ -41,7 +41,7 @@ public class LingManus extends ToolCallAgent {
         this.setMaxSteps(20);
 
         // 初始化客户端
-        ChatClient chatClient = ChatClient.builder(dashscopeChatModel)
+        ChatClient chatClient = ChatClient.builder(openAiChatModel)
                 .defaultAdvisors(new MyLoggerAdvisor())
                 .build();
         this.setChatClient(chatClient);

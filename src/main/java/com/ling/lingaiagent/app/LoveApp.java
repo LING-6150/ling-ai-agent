@@ -1,8 +1,7 @@
 package com.ling.lingaiagent.app;
 
 import com.ling.lingaiagent.advisor.MyLoggerAdvisor;
-import com.ling.lingaiagent.rag.LoveAppRagCustomAdvisorFactory;
-import com.ling.lingaiagent.rag.QueryRewriter;
+import com.ling.lingaiagent.rag.*;
 import io.swagger.v3.core.filter.SpecFilter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -18,14 +17,13 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-
-import com.ling.lingaiagent.rag.MyTokenTextSplitter;
-import com.ling.lingaiagent.rag.MyKeywordEnricher;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -85,9 +83,9 @@ public class LoveApp {
      * * | 响应对象 | Response Object | AI 返回的结果 |
      * 初始化客户端
      *
-     * @param dashscopeChatModel
+     * @param openAiChatModel
      */
-    public LoveApp(ChatModel dashscopeChatModel) {
+    public LoveApp(ChatModel openAiChatModel) {
         //String fileDir = System.getProperty("user.dir")+"/tmp.chat-memory";
 
         //1. create chat memory (window-based, keeps the last 20 message)
@@ -97,7 +95,7 @@ public class LoveApp {
                 .build();
 
         // Build ChatClient and configure default behaviors
-        chatClient = ChatClient.builder(dashscopeChatModel)
+        chatClient = ChatClient.builder(openAiChatModel)
                 .defaultSystem(SYSTEM_PROMPT) // set default system prompt
                 .defaultAdvisors(
                         //chat memoery advisor : manage conversation history
@@ -180,8 +178,6 @@ public class LoveApp {
     @Resource
     private  VectorStore loveAppVectorStore;
 
-    @Resource
-    private Advisor loveAppRagCloudAdvisor;
 
     @Resource
     private VectorStore pgVectorVectorStore;  // ← 改这里
@@ -211,6 +207,50 @@ public class LoveApp {
         log.info("content: {}", content);
         return content;
     }
+
+    @Resource
+    private RerankService rerankService;
+
+    public String doChatWithRagAndRerank(String message, String chatId, String status) {
+        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
+
+        // 1. 先检索 topK=6（比原来多）
+        Filter.Expression expression = new FilterExpressionBuilder()
+                .eq("status", status)
+                .build();
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(rewrittenMessage)
+                .topK(6)
+                .similarityThreshold(0.3)
+                .filterExpression(expression)
+                .build();
+        List<Document> retrievedDocs = pgVectorVectorStore.similaritySearch(searchRequest);
+        log.info("Retrieved {} docs for status={}", retrievedDocs.size(), status); // ← 加这一行
+
+
+        // 2. reranking，取 top 3
+        List<String> docTexts = retrievedDocs.stream()
+                .map(Document::getText)
+                .collect(Collectors.toList());
+        List<String> rerankedTexts = rerankService.rerank(rewrittenMessage, docTexts, 3);
+
+        // 3. 构建 context
+        String context = String.join("\n\n", rerankedTexts);
+
+        // 4. 调用 AI
+        ChatResponse chatResponse = chatClient
+                .prompt()
+                .user("Context:\n" + context + "\n\nQuestion: " + rewrittenMessage)
+                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(new MyLoggerAdvisor())
+                .call()
+                .chatResponse();
+
+        String content = chatResponse.getResult().getOutput().getText();
+        log.info("content with rerank: {}", content);
+        return content;
+    }
+
 
     // AI 调用工具能力
     @Resource

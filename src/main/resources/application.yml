@@ -8,36 +8,58 @@ spring:
     username: postgres
     password: postgres
   ai:
-    ollama:
-      base-url: http://localhost:11434
+    chat:
+      client:
+        observations:
+          include-input: true
+          include-output: true
+    openai:
+      api-key: ${OPENAI_API_KEY}
       chat:
-        model: gemma3:1b
-    #openai:
-      #api-key: ${OPENAI_API_KEY:your-key-here}
-      #chat:
-        #options:
-          #model: gpt-4o
+        options:
+          model: gpt-4o
+      embedding:
+        options:
+          model: text-embedding-3-small
     mcp:
       client:
         request-timeout: 60s
-        sse:
-          connections:
-            server1:
-              url: http://localhost:8127
-        # stdio:
-        #   servers-configuration: classpath:mcp-servers.json
+        #sse:
+        #  connections:
+        #    server1:
+        #      url: http://localhost:8127
     vectorstore:
       pgvector:
         index-type: HNSW
         dimensions: 1536
         distance-type: COSINE_DISTANCE
         initialize-schema: true
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  otlp:
+    tracing:
+      endpoint: https://api.smith.langchain.com/otel/v1/traces
+      headers:
+        x-api-key: ${LANGSMITH_API_KEY}
+        langsmith-project: ling-ai-agent
+
 server:
   port: 8123
   servlet:
     context-path: /api
 
-# springdoc-openapi
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -49,12 +71,12 @@ springdoc:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.ling.lingaiagent.controller
-# knife4j config
+  show-actuator: false
+
 knife4j:
   enable: true
   setting:
     language: zh_cn
-#search API
+
 search-api:
   api-key: pVEekXeWWe72tguRwE6ziXGY
-
