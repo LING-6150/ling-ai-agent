@@ -90,6 +90,9 @@ and PDF generation to provide personalized relationship guidance and life assist
 ![LangSmith Dashboard](docs/images/LangSmith1.png)
 ![LangSmith Trace Detail](docs/images/LangSmith2.png)
 
+### 🔍 RAG Citation Sources
+![RAG Sources](docs/images/Sources.png)
+
 ---
 
 ## ⚙ Tech Stack
