@@ -26,6 +26,7 @@ and PDF generation to provide personalized relationship guidance and life assist
 
 - 🧠 **Retrieval-Augmented Generation (RAG)**
   - Custom document ingestion pipeline with batch processing
+  - Hybrid retrieval combining **vector similarity + BM25 keyword search via Reciprocal Rank Fusion (RRF)**
   - Reduced embedding API calls from **30 → 2 per document** via batch ingestion
   - Cross-encoder reranking (ms-marco-MiniLM-L-6-v2) via Python FastAPI microservice
   - Vector search powered by **PGVector + HNSW indexing**
@@ -122,6 +123,7 @@ and PDF generation to provide personalized relationship guidance and life assist
 
 **DevOps**
 - Docker (containerized, cross-platform amd64 build via Docker Buildx)
+- GitHub Actions CI/CD (automated build and push of Docker images)
 - AWS EC2 (t3.micro, Ubuntu 24.04) — production deployment
 - Apache JMeter (load testing)
 
@@ -221,7 +223,7 @@ BaseAgent → ReActAgent → ToolCallAgent → LingManus
 
 ## ☁️ Cloud Deployment
 
-Backend containerized with Docker and deployed to AWS EC2:
+Backend containerized with Docker and deployed to AWS EC2 via a GitHub Actions CI/CD pipeline.
 
 | Platform | Type | Details |
 |----------|------|---------|
@@ -229,6 +231,7 @@ Backend containerized with Docker and deployed to AWS EC2:
 | Docker Hub | Registry | Public image hosting |
 
 > Resolved ARM → amd64 cross-platform build issue using Docker Buildx
+>  > Docker images are automatically built and pushed to Docker Hub via GitHub Actions CI/CD on every commit.
 
 ---
 
@@ -321,23 +324,10 @@ Designed as part of an advanced AI engineering portfolio.
 
 ## 📝 Resume Bullets
 ```
-· Engineered ReAct-based agentic system referencing OpenManus architecture 
-  with 4-layer inheritance (BaseAgent→ReActAgent→ToolCallAgent→LingManus); 
-  implemented human-in-the-loop escalation, stuck-state detection, and 
-  self-termination; integrated LangSmith tracing for step-level observability
-
-· Designed tool orchestration framework via standalone MCP server 
-  (Stdio + SSE transport); containerized with Docker and deployed on AWS EC2; 
-  resolved ARM → amd64 compatibility via Docker Buildx
-
-· Built production RAG pipeline with HNSW vector indexing (PGVector), 
-  custom query-rewriting advisors, and cross-encoder reranking 
-  (ms-marco-MiniLM-L-6-v2) via Python FastAPI microservice; reduced 
-  embedding API calls from 30 to 2 per document via SHA-256 deduplication
-
-· Sustained 41 req/min throughput with P95 latency ~6.1s and 0% error 
-  rate under concurrent load (JMeter)
-```
+Architected a production-grade RAG pipeline combining PGVector (HNSW indexing) with hybrid retrieval (vector similarity + BM25 via RRF fusion), query rewriting, and cross-encoder reranking (ms-marco-MiniLM-L-6-v2) via a Python FastAPI microservice; reduced embedding API costs by 93% (30→2 calls/doc) via SHA-256 content-based deduplication and built a dynamic PDF ingestion pipeline with real-time chunking and AI keyword metadata enrichment
+Engineered a ReAct-based hierarchical agent framework (BaseAgent → ReActAgent → ToolCallAgent → LingManus) with stuck-state detection, human-in-the-loop escalation, and self-termination; integrated LangSmith tracing via OpenTelemetry and delivered real-time SSE streaming with persistent multi-session memory and sliding window context management
+Built tool orchestration layer with 6 MCP tools for web search, scraping, file operations, and PDF generation over Stdio/SSE transport; containerized with Docker and deployed on AWS EC2; implemented CI/CD with GitHub Actions to automatically build and push Docker images using Docker Buildx for ARM→amd64 cross-platform builds
+Sustained 41 req/min throughput with P95 latency ~6.1s and 0% error under concurrent load (Apache JMeter); implemented persistent file-based sliding-window chat memory```
 
 ---
 
