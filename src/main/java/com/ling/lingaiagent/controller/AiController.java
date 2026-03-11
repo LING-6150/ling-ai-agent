@@ -60,4 +60,9 @@ public class AiController {
     public String doChatWithRagAndRerank(String message, String chatId, String status) {
         return loveApp.doChatWithRagAndRerank(message, chatId, status);
     }
+
+    @GetMapping("/love_app/chat/rag/hybrid")
+    public String doChatWithHybridRag(String message, String chatId, String status) {
+        return loveApp.doChatWithHybridRag(message, chatId, status);
+    }
 }

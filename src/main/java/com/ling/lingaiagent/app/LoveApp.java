@@ -178,6 +178,8 @@ public class LoveApp {
     @Resource
     private  VectorStore loveAppVectorStore;
 
+    @Resource
+    private HybridSearchService hybridSearchService;
 
     @Resource
     private VectorStore pgVectorVectorStore;  // ← 改这里
@@ -260,6 +262,46 @@ public class LoveApp {
         return answer + "\n\n**Sources:**\n" + sources;
     }
 
+    public String doChatWithHybridRag(String message, String chatId, String status) {
+        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
+
+        // 1. 混合检索（向量 + BM25 + RRF融合）
+        List<Document> hybridDocs = hybridSearchService.hybridSearch(rewrittenMessage, status, 6);
+
+        // 2. cross-encoder reranking
+        List<String> docTexts = hybridDocs.stream()
+                .map(Document::getText)
+                .collect(Collectors.toList());
+        List<String> rerankedTexts = rerankService.rerank(rewrittenMessage, docTexts, 3);
+
+        // 3. 构建 context
+        String context = String.join("\n\n", rerankedTexts);
+
+        // 4. 调用 AI
+        ChatResponse chatResponse = chatClient
+                .prompt()
+                .user("Context:\n" + context + "\n\nQuestion: " + rewrittenMessage)
+                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(new MyLoggerAdvisor())
+                .call()
+                .chatResponse();
+
+        String answer = chatResponse.getResult().getOutput().getText();
+
+        // 5. 拼接 Sources
+        String sources = hybridDocs.stream().map(doc -> {
+            Map<String, Object> md = doc.getMetadata();
+            String filename = (String) md.getOrDefault("filename", "unknown");
+            Object chunkIndex = md.getOrDefault("chunkIndex", "?");
+            String docId = (String) md.getOrDefault("docId", "unknown");
+            return String.format("- %s (chunk %s, docId: %s)", filename, chunkIndex, docId);
+        }).distinct().collect(Collectors.joining("\n"));
+
+        log.info("content with hybrid rag: {}", answer);
+        return answer + "\n\n**Sources:**\n" + sources;
+    }
+
+
 
     // AI 调用工具能力
     @Resource
@@ -286,6 +328,7 @@ public class LoveApp {
         log.info("content: {}", content);
         return content;
     }
+
 
 
 
