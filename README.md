@@ -70,6 +70,7 @@ to provide personalized relationship guidance and life assistance.
 ### 💬 AI Love Coach
 ![Love Coach 1](docs/images/love-coach-1.png)
 ![Love Coach 2](docs/images/love-coach-2.png)
+![Love Coach 2](docs/images/love-coach-3.png)
 
 ### 🤖 AI Super Agent
 ![Super Agent 1](docs/images/super-agent-1.png)
@@ -77,6 +78,11 @@ to provide personalized relationship guidance and life assistance.
 
 ### 📄 PDF Generation Result
 ![PDF Result](docs/images/pdf-result.png)
+
+### 📊 LangSmith Tracing
+![LangSmith Dashboard](docs/images/LangSmith1.png)
+![LangSmith Trace Detail](docs/images/LangSmith2.png)
+
 
 ---
 
