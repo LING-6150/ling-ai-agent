@@ -89,6 +89,14 @@ public class PgVectorStoreConfig {
         List<Document> enrichedDocuments = myKeywordEnricher.enrichDocuments(splitDocuments);
         log.info("✅ Enriched {} documents with keywords", enrichedDocuments.size());
 
+        // ✅ 加这段，给每个 chunk 加 chunkIndex 和 docId
+        for (int i = 0; i < enrichedDocuments.size(); i++) {
+            Document doc = enrichedDocuments.get(i);
+            String filename = (String) doc.getMetadata().getOrDefault("filename", "unknown");
+            String docId = filename.replaceAll("[^a-zA-Z0-9]", "").toLowerCase().substring(0, Math.min(8, filename.length()));
+            doc.getMetadata().put("chunkIndex", i);
+            doc.getMetadata().put("docId", docId);
+        }
 
 
         batchAddDocuments(vectorStore, enrichedDocuments);

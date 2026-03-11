@@ -246,9 +246,18 @@ public class LoveApp {
                 .call()
                 .chatResponse();
 
-        String content = chatResponse.getResult().getOutput().getText();
-        log.info("content with rerank: {}", content);
-        return content;
+        String answer = chatResponse.getResult().getOutput().getText();
+        // ✅ 拼接 Sources
+        String sources = retrievedDocs.stream().map(doc -> {
+            Map<String, Object> md = doc.getMetadata();
+            String filename = (String) md.getOrDefault("filename", "unknown");
+            Object chunkIndex = md.getOrDefault("chunkIndex", "?");
+            String docId = (String) md.getOrDefault("docId", "unknown");
+            return String.format("- %s (chunk %s, docId: %s)", filename, chunkIndex, docId);
+        }).distinct().collect(Collectors.joining("\n"));
+
+        log.info("content with rerank: {}", answer);
+        return answer + "\n\n**Sources:**\n" + sources;
     }
 
 
