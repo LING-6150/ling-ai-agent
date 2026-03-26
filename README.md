@@ -1,8 +1,8 @@
-# 💖 Ling AI Agent — Intelligent Relationship & Life Assistant
+# 💖 Ling AI Agent — Production-Grade Multi-Agent Platform
 
-An AI-powered multi-agent system built with **Spring AI 1.0.0**, combining  
-LLM orchestration, RAG knowledge retrieval, cross-encoder reranking, tool calling,  
-and PDF generation to provide personalized relationship guidance and life assistance.
+A production-style AI agent system built with Spring AI 1.0.0, 
+combining LLM orchestration, RAG knowledge retrieval, 
+cross-encoder reranking, and MCP tool integration.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-green)](https://spring.io/projects/spring-boot)
